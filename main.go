@@ -9,10 +9,8 @@ import (
 	"fmt"
 	"os"
 	"math"
-	"unsafe"
 	"github.com/go-gl/gl"
 	"github.com/go-gl/glfw"
-	"github.com/go-gl/glu"
 	"github.com/go-gl/mathgl/mgl64"
 )
 
@@ -53,8 +51,11 @@ func main() {
 	inits()
 	// Start loop
 	running := true
+	var time Time
 	for running {
-		// OpenGL rendering goes here.
+		time.Set(glfw.Time())
+		handleInputs()
+		physics(time)
 		render()
 
 		// Swap front and back rendering buffers. This also implicitly calls
@@ -103,13 +104,15 @@ func onChar(key, state int) {
 
 
 
-var sphere unsafe.Pointer
 var terrain *Terrain
 var camera Camera
+var ball *Ball
 
 func inits() {
-	sphere = glu.NewQuadric()
-
+	ball = NewBall()
+	terrain = ReadTerrain(mgl64.Vec3{1,0.4,1})
+	//terrain.DrawAsSurface = false
+	
 	gl.ShadeModel (gl.SMOOTH)
 	gl.ClearColor (0.0, 0.0, 0.0, 0.0)
 	gl.ClearDepth(-1.0)
@@ -122,10 +125,7 @@ func inits() {
 
 	gl.Enable(gl.LIGHTING)
 	gl.Enable(gl.LIGHT0)
-	setLights(0)
-	
-	terrain = ReadTerrain(mgl64.Vec3{1,0.4,1})
-	//terrain.DrawAsSurface = false
+	setLights()
 }
 
 var camYaw float64
@@ -148,20 +148,21 @@ func handleInputs() {
 	if keys['E'] {camera.Z -= dist}*/
 }
 
-func render() {
-	handleInputs()
+func physics(time Time) {
 	
-	time := float32(glfw.Time())
+}
+
+func render() {
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
-	camera.SetupCameraLook(time)
+	camera.SetupCameraLook()
 	terrain.Draw()
-	drawSphere(time)
+	ball.Draw()
 }
 
 
 
-func setLights(time float32) {
+func setLights() {
 	whiteSpecularLight := []float32{ 1,1,1 }
 	blackAmbientLight := []float32{ 0,0,0 }
 	whiteDiffuseLight := []float32{ 1,1,1 }
@@ -177,21 +178,5 @@ func setLights(time float32) {
 
 	gl.Materialfv(gl.FRONT, gl.SPECULAR, mat_specular)
 	gl.Materialfv(gl.FRONT, gl.SHININESS, mat_shininess)
-}
-
-func drawSphere(time float32) {
-	gl.PushMatrix()
-	//gl.Rotatef(time*30,0,0,1)
-	//gl.Rotatef(90,0,-1,0)
-	glu.Sphere(sphere, .25, 10, 10)
-	//gl.Rotatef(time*10,0,0,1)
-	//gl.Translatef(.3,0,0)
-	//glu.Sphere(sphere, .1, 10, 10)
-	gl.PopMatrix()
-	
-	/*gl.PushMatrix()
-	gl.Translatef(0, 0, 0)
-	gl.Rectf(0,0,.3,.3)
-	gl.PopMatrix()*/
 }
 

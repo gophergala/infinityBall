@@ -14,7 +14,7 @@ type Camera struct {
 	Fov float64
 }
 
-func (cam Camera) SetupCameraLook(time float32) {
+func (cam Camera) SetupCameraLook() {
 	gl.MatrixMode(gl.PROJECTION)
 	gl.LoadIdentity()
 	glu.Perspective(90, aspect, .1, 1000)
