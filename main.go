@@ -13,6 +13,7 @@ import (
 	"github.com/go-gl/gl"
 	"github.com/go-gl/glfw"
 	"github.com/go-gl/glu"
+	"github.com/go-gl/mathgl/mgl64"
 )
 
 func main() {
@@ -116,16 +117,15 @@ func inits() {
 	gl.Enable(gl.DEPTH_TEST)
 	gl.DepthFunc(gl.LEQUAL)
 	//gl.DepthRangef(0,1)
-	//gl.Enable(gl.BLEND)
+	gl.Disable(gl.BLEND)
 	gl.Hint(gl.PERSPECTIVE_CORRECTION_HINT, gl.NICEST)
 
 	gl.Enable(gl.LIGHTING)
 	gl.Enable(gl.LIGHT0)
 	setLights(0)
 	
-	terrain = ReadTerrain()
+	terrain = ReadTerrain(mgl64.Vec3{1,0.4,1})
 	//terrain.DrawAsSurface = false
-	terrain.ScaleY = 0.4
 }
 
 var camRotation float64
@@ -161,7 +161,7 @@ func render() {
 func setLights(time float32) {
 	whiteSpecularLight := []float32{ 1,1,1 }
 	blackAmbientLight := []float32{ 0,0,0 }
-	whiteDiffuseLight := []float32{ 0,1,0 }
+	whiteDiffuseLight := []float32{ 1,1,1 }
 
 	mat_specular := []float32{1.0, 1.0, 1.0}
 	mat_shininess := []float32{ 50.0 }
@@ -179,7 +179,7 @@ func setLights(time float32) {
 func drawSphere(time float32) {
 	gl.PushMatrix()
 	//gl.Rotatef(time*30,0,0,1)
-	gl.Rotatef(90,0,-1,0)
+	//gl.Rotatef(90,0,-1,0)
 	glu.Sphere(sphere, .25, 10, 10)
 	//gl.Rotatef(time*10,0,0,1)
 	//gl.Translatef(.3,0,0)
