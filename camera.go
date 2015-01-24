@@ -1,28 +1,34 @@
 package main
 
 import (
-	//"math"
 	"github.com/go-gl/gl"
 	"github.com/go-gl/glu"
+	"github.com/go-gl/mathgl/mgl64"
 )
 
 type Camera struct {
-	X, Y, Z float64
+	Pos mgl64.Vec3
 	Roll float32
 	Pitch float32
 	Yaw float32
 	Fov float64
+	Aspect float64
 }
 
 func (cam Camera) SetupCameraLook() {
+	x := cam.Pos.X()
+	y := cam.Pos.Y()
+	z := cam.Pos.Z()
+	
 	gl.MatrixMode(gl.PROJECTION)
 	gl.LoadIdentity()
-	glu.Perspective(90, aspect, .1, 1000)
-
+	glu.Perspective(90, cam.Aspect, .1, 1000)
+	
 	gl.MatrixMode(gl.MODELVIEW)
 	gl.LoadIdentity()
-	glu.LookAt(cam.X,cam.Y,cam.Z, 0,0,0, 0,1,0)
-		//fov := math.Tan(cam.Fov/360*math.Pi)
+	glu.LookAt(x,y,z, 0,0,0, 0,1,0)
+	
+	//fov := math.Tan(cam.Fov/360*math.Pi)
 	//gl.Frustum(-fov,fov,-fov*aspect,fov*aspect, 1, 10)
 
 	//gl.LoadIdentity()

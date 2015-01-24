@@ -10,15 +10,18 @@ import (
 type Ball struct {
 	Pos mgl64.Vec3
 	Velocity mgl64.Vec3
-	Mass float64
 	Radius float64
+	Mass float64
+	Bounciness float64
 	sphere unsafe.Pointer
 }
 
-func NewBall() *Ball {
+func NewBall(radius, mass, bounciness float64) *Ball {
 	ball := new(Ball)
 	ball.sphere = glu.NewQuadric()
-	ball.Radius = .25
+	ball.Radius = radius
+	ball.Mass = mass
+	ball.Bounciness = bounciness
 	ball.Pos = mgl64.Vec3{0,0,0}
 	return ball
 }

@@ -118,7 +118,7 @@ func (t *Terrain) GetTriangleUnder(pos mgl64.Vec3) Triangle {
 	x := int(xf)
 	y := int(yf)
 	
-	if x<0 || y<0 || x>=w || y>=h {
+	if x<0 || y<0 || x>=w-1 || y>=h-1 {
 		return Triangle{mgl64.Vec3{math.NaN(),0,0},mgl64.Vec3{0,0,0},mgl64.Vec3{0,0,0}}
 	}
 	
@@ -157,8 +157,8 @@ func (t *Terrain) Draw() {
 		}
 	} else {
 		gl.Begin(gl.LINES)
-		for y:=0; y<h-1; y++ {
-			for x:=0; x<w-1; x++ {
+		for y:=0; y<h-2; y++ {
+			for x:=0; x<w-2; x++ {
 				gl.Vertex3dv(&t.Verts[y  ][x  ])
 				gl.Vertex3dv(&t.Verts[y  ][x+1])
 				gl.Vertex3dv(&t.Verts[y  ][x  ])

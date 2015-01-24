@@ -70,12 +70,10 @@ func main() {
 	}
 }
 
-var aspect float64
-
 func onResize(w, h int) {
 	fmt.Printf("resized: %dx%d\n", w, h)
 	gl.Viewport(0, 0, w, h)
-	aspect = float64(w)/float64(h)
+	camera.Aspect = float64(w)/float64(h)
 }
 
 func onClose() int {
@@ -84,22 +82,22 @@ func onClose() int {
 }
 
 func onMouseBtn(button, state int) {
-	fmt.Printf("mouse button: %d, %d\n", button, state)
+	//fmt.Printf("mouse button: %d, %d\n", button, state)
 }
 
 func onMouseWheel(delta int) {
-	fmt.Printf("mouse wheel: %d\n", delta)
+	//fmt.Printf("mouse wheel: %d\n", delta)
 }
 
 var keys [1024]bool
 
 func onKey(key, state int) {
 	keys[key] = state == 1;
-	fmt.Printf("key: %d, %d\n", key, state)
+	//fmt.Printf("key: %d, %d\n", key, state)
 }
 
 func onChar(key, state int) {
-	fmt.Printf("char: %d, %d\n", key, state)
+	//fmt.Printf("char: %d, %d\n", key, state)
 }
 
 
@@ -109,8 +107,8 @@ var camera Camera
 var ball *Ball
 
 func inits() {
-	ball = NewBall()
-	ball.Pos = mgl64.Vec3{1,3,1}
+	ball = NewBall(.1,.1,.8)
+	ball.Pos = mgl64.Vec3{1,2,1}
 	terrain = ReadTerrain(mgl64.Vec3{1,0.4,1})
 	//terrain.DrawAsSurface = false
 	
@@ -138,16 +136,11 @@ func handleInputs() {
 	if keys['D'] {camYaw -= .01}
 	if keys['W'] {camPitch += .01}	
 	if keys['S'] {camPitch -= .01}	
+	terrain.DrawAsSurface = !keys['L']
 
-	camera.Y = math.Sin(camPitch)*3
-	camera.X = math.Cos(camPitch)*math.Cos(camYaw)*3
-	camera.Z = math.Cos(camPitch)*math.Sin(camYaw)*3
-	/*if keys['A'] {camera.X += dist}
-	if keys['D'] {camera.X -= dist}
-	if keys['W'] {camera.Y -= dist}
-	if keys['S'] {camera.Y += dist}
-	if keys['Q'] {camera.Z += dist}
-	if keys['E'] {camera.Z -= dist}*/
+	camera.Pos[1] = math.Sin(camPitch)*3
+	camera.Pos[0] = math.Cos(camPitch)*math.Cos(camYaw)*3
+	camera.Pos[2] = math.Cos(camPitch)*math.Sin(camYaw)*3
 }
 
 func physics(time Time) {
@@ -157,7 +150,11 @@ func physics(time Time) {
 	
 	tri := terrain.GetTriangleUnder(ball.Pos)
 	if tri[0].X() != math.NaN() && tri.Distance(ball.Pos) < ball.Radius {
-		ball.Velocity = ball.Velocity.Sub(VectorProjection(ball.Velocity, tri.Normal()).Mul(2))
+		bounce := VectorProjection(ball.Velocity, tri.Normal())
+		ball.Velocity = ball.Velocity.Sub(bounce.Mul(1+ball.Bounciness))
+		posPassThrough := VectorProjection(ball.Pos.Sub(tri[0]), tri.Normal())
+		bottomPassThrough := posPassThrough.Sub(tri.Normal().Mul(ball.Radius))
+		ball.Pos = ball.Pos.Sub(bottomPassThrough.Mul(1+ball.Bounciness))
 	}
 }
 
