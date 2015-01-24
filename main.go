@@ -130,6 +130,7 @@ func inits() {
 
 var camYaw float64
 var camPitch float64 = .5
+const gravity float64 = -0.0982
 
 func handleInputs() {
 	if keys['A'] {camYaw += .01}
@@ -149,7 +150,14 @@ func handleInputs() {
 }
 
 func physics(time Time) {
+	ball.Velocity[1] += gravity*time.Delta;
+	ball.Pos = ball.Pos.Add(ball.Velocity)
 	
+	/*
+	tri := terrain.GetTriangleUnder(ball.Pos)
+	if ball.Pos.Distance(tri) < ball.Radius {
+		ball.Velocity = ball.Velocity.Sub(ball.Velocity.VectorProjection(tri.Normal()).Mul(2))
+	}*/
 }
 
 func render() {
@@ -168,7 +176,7 @@ func setLights() {
 	whiteDiffuseLight := []float32{ 1,1,1 }
 
 	mat_specular := []float32{1.0, 1.0, 1.0}
-	mat_shininess := []float32{ 50.0 }
+	mat_shininess := []float32{ 10.0 }
 	light_position := []float32{ 0.0, 10.0, 1 }
 	
 	gl.Lightfv(gl.LIGHT0, gl.SPECULAR, whiteSpecularLight);

@@ -9,6 +9,7 @@ import (
 
 type Terrain struct {
 	Scale mgl64.Vec3
+	Pos mgl64.Vec3
 	Heights [][]float64
 	Normals [][]mgl64.Vec3
 	DrawAsSurface bool
@@ -92,29 +93,39 @@ func normal(v, t1, t2 mgl64.Vec3) mgl64.Vec3 {
 	return mgl64.Vec3{nx/l, ny/l, nz/l}
 }
 
+/*func (t *Terrain) GetTriangleUnder(pos mgl64.Vec3) Triangle {
+	
+}*/
 
 func (t *Terrain) Draw() {
 	h := len(t.Heights)
 	w := len(t.Heights[0])
 	
 	gl.PushMatrix()
-	gl.Translatef(-float32(w)/2, 0, -float32(h)/2.0)
-	//gl.Scalef(t.ScaleX, t.ScaleY, t.ScaleZ)
+
+	var n [3]float64	
+	
+	gl.Translated(t.Pos[0], t.Pos[1], t.Pos[2])
 	
 	if t.DrawAsSurface {
-		gl.Begin(gl.QUADS)
+		gl.Begin(gl.TRIANGLES)
 		for y:=0; y<h-1; y++ {
 			Y := float64(y)
 			for x:=0; x<w-1; x++ {
 				X := float64(x)
 				gl.Vertex3d(X+0, t.Heights[y+0][x+0], Y+0)
-				gl.Normal3d(0,1,0)
-				gl.Vertex3d(X+0, t.Heights[y+1][x+0], Y+1)
-				gl.Normal3d(0,1,0)
-				gl.Vertex3d(X+1, t.Heights[y+1][x+1], Y+1)
-				gl.Normal3d(0,1,0)
+				n = t.Normals[y+0][x+0]; gl.Normal3d(n[0], n[2], n[1])
 				gl.Vertex3d(X+1, t.Heights[y+0][x+1], Y+0)
-				gl.Normal3d(0,1,0)
+				n = t.Normals[y+0][x+1]; gl.Normal3d(n[0], n[2], n[1])
+				gl.Vertex3d(X+1, t.Heights[y+1][x+1], Y+1)
+				n = t.Normals[y+1][x+1]; gl.Normal3d(n[0], n[2], n[1])
+				
+				gl.Vertex3d(X+1, t.Heights[y+1][x+1], Y+1)
+				n = t.Normals[y+1][x+1]; gl.Normal3d(n[0], n[2], n[1])
+				gl.Vertex3d(X+0, t.Heights[y+1][x+0], Y+1)
+				n = t.Normals[y+1][x+0]; gl.Normal3d(n[0], n[2], n[1])
+				gl.Vertex3d(X+0, t.Heights[y+0][x+0], Y+0)
+				n = t.Normals[y+0][x+0]; gl.Normal3d(n[0], n[2], n[1])
 			}
 		}
 	} else {
