@@ -110,7 +110,6 @@ func inits() {
 	ball = NewBall(.1,.1,.8)
 	ball.Pos = mgl64.Vec3{1,2,1}
 	terrain = ReadTerrain(mgl64.Vec3{1,0.4,1})
-	//terrain.DrawAsSurface = false
 	
 	gl.ShadeModel (gl.SMOOTH)
 	gl.ClearColor (0.0, 0.0, 0.0, 0.0)
@@ -147,7 +146,6 @@ func physics(time Time) {
 	ball.Velocity[1] += gravity*time.Delta;
 	ball.Pos = ball.Pos.Add(ball.Velocity)
 	
-	
 	tri := terrain.GetTriangleUnder(ball.Pos)
 	if tri[0].X() != math.NaN() && tri.Distance(ball.Pos) < ball.Radius {
 		bounce := VectorProjection(ball.Velocity, tri.Normal())
@@ -174,7 +172,7 @@ func setLights() {
 	whiteDiffuseLight := []float32{ 1,1,1 }
 
 	mat_specular := []float32{1.0, 1.0, 1.0}
-	mat_shininess := []float32{ 10.0 }
+	mat_shininess := []float32{ 125.0 }
 	light_position := []float32{ 0.0, 10.0, 1 }
 	
 	gl.Lightfv(gl.LIGHT0, gl.SPECULAR, whiteSpecularLight);
