@@ -128,15 +128,18 @@ func inits() {
 	//terrain.DrawAsSurface = false
 }
 
-var camRotation float64
+var camYaw float64
+var camPitch float64 = .5
 
 func handleInputs() {
-	if keys['A'] {camRotation += .01}
-	if keys['D'] {camRotation -= .01}
+	if keys['A'] {camYaw += .01}
+	if keys['D'] {camYaw -= .01}
+	if keys['W'] {camPitch += .01}	
+	if keys['S'] {camPitch -= .01}	
 
-	camera.Y = 1
-	camera.X = math.Cos(camRotation)
-	camera.Z = math.Sin(camRotation)
+	camera.Y = math.Sin(camPitch)*3
+	camera.X = math.Cos(camPitch)*math.Cos(camYaw)*3
+	camera.Z = math.Cos(camPitch)*math.Sin(camYaw)*3
 	/*if keys['A'] {camera.X += dist}
 	if keys['D'] {camera.X -= dist}
 	if keys['W'] {camera.Y -= dist}
