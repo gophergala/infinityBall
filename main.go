@@ -7,8 +7,12 @@ package main
 
 import (
 	"fmt"
-	"github.com/go-gl/glfw"
 	"os"
+	"math"
+	"unsafe"
+	"github.com/go-gl/gl"
+	"github.com/go-gl/glfw"
+	"github.com/go-gl/glu"
 )
 
 func main() {
@@ -21,7 +25,7 @@ func main() {
 	// Ensure glfw is cleanly terminated on exit.
 	defer glfw.Terminate()
 
-	if err = glfw.OpenWindow(256, 256, 8, 8, 8, 0, 0, 0, glfw.Windowed); err != nil {
+	if err = glfw.OpenWindow(640, 640, 8, 8, 8, 0, 0, 0, glfw.Windowed); err != nil {
 		fmt.Fprintf(os.Stderr, "[e] %v\n", err)
 		return
 	}
@@ -43,11 +47,14 @@ func main() {
 	glfw.SetMouseWheelCallback(onMouseWheel)
 	glfw.SetKeyCallback(onKey)
 	glfw.SetCharCallback(onChar)
-
+	
+	
+	inits()
 	// Start loop
 	running := true
 	for running {
 		// OpenGL rendering goes here.
+		render()
 
 		// Swap front and back rendering buffers. This also implicitly calls
 		// glfw.PollEvents(), so we have valid key/mouse/joystick states after
@@ -61,8 +68,12 @@ func main() {
 	}
 }
 
+var aspect float64
+
 func onResize(w, h int) {
 	fmt.Printf("resized: %dx%d\n", w, h)
+	gl.Viewport(0, 0, w, h)
+	aspect = float64(w)/float64(h)
 }
 
 func onClose() int {
@@ -78,10 +89,106 @@ func onMouseWheel(delta int) {
 	fmt.Printf("mouse wheel: %d\n", delta)
 }
 
+var keys [1024]bool
+
 func onKey(key, state int) {
+	keys[key] = state == 1;
 	fmt.Printf("key: %d, %d\n", key, state)
 }
 
 func onChar(key, state int) {
 	fmt.Printf("char: %d, %d\n", key, state)
 }
+
+
+
+var sphere unsafe.Pointer
+var terrain *Terrain
+var camera Camera
+
+func inits() {
+	sphere = glu.NewQuadric()
+
+	gl.ShadeModel (gl.SMOOTH)
+	gl.ClearColor (0.0, 0.0, 0.0, 0.0)
+	gl.ClearDepth(-1.0)
+	gl.DepthMask(true)
+	gl.Enable(gl.DEPTH_TEST)
+	gl.DepthFunc(gl.LEQUAL)
+	//gl.DepthRangef(0,1)
+	//gl.Enable(gl.BLEND)
+	gl.Hint(gl.PERSPECTIVE_CORRECTION_HINT, gl.NICEST)
+
+	gl.Enable(gl.LIGHTING)
+	gl.Enable(gl.LIGHT0)
+	setLights(0)
+	
+	terrain = ReadTerrain()
+	//terrain.DrawAsSurface = false
+	terrain.ScaleY = 0.4
+}
+
+var camRotation float64
+
+func handleInputs() {
+	if keys['A'] {camRotation += .01}
+	if keys['D'] {camRotation -= .01}
+
+	camera.Y = 1
+	camera.X = math.Cos(camRotation)
+	camera.Z = math.Sin(camRotation)
+	/*if keys['A'] {camera.X += dist}
+	if keys['D'] {camera.X -= dist}
+	if keys['W'] {camera.Y -= dist}
+	if keys['S'] {camera.Y += dist}
+	if keys['Q'] {camera.Z += dist}
+	if keys['E'] {camera.Z -= dist}*/
+}
+
+func render() {
+	handleInputs()
+	
+	time := float32(glfw.Time())
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+
+	camera.SetupCameraLook(time)
+	terrain.Draw()
+	drawSphere(time)
+}
+
+
+
+func setLights(time float32) {
+	whiteSpecularLight := []float32{ 1,1,1 }
+	blackAmbientLight := []float32{ 0,0,0 }
+	whiteDiffuseLight := []float32{ 0,1,0 }
+
+	mat_specular := []float32{1.0, 1.0, 1.0}
+	mat_shininess := []float32{ 50.0 }
+	light_position := []float32{ 0.0, 10.0, 1 }
+	
+	gl.Lightfv(gl.LIGHT0, gl.SPECULAR, whiteSpecularLight);
+	gl.Lightfv(gl.LIGHT0, gl.AMBIENT, blackAmbientLight);
+	gl.Lightfv(gl.LIGHT0, gl.DIFFUSE, whiteDiffuseLight);
+	gl.Lightfv(gl.LIGHT0, gl.POSITION, light_position)
+
+	gl.Materialfv(gl.FRONT, gl.SPECULAR, mat_specular)
+	gl.Materialfv(gl.FRONT, gl.SHININESS, mat_shininess)
+}
+
+func drawSphere(time float32) {
+	gl.PushMatrix()
+	//gl.Rotatef(time*30,0,0,1)
+	gl.Rotatef(90,0,-1,0)
+	glu.Sphere(sphere, .25, 10, 10)
+	//gl.Rotatef(time*10,0,0,1)
+	//gl.Translatef(.3,0,0)
+	//glu.Sphere(sphere, .1, 10, 10)
+	gl.PopMatrix()
+	
+	/*gl.PushMatrix()
+	gl.Translatef(0, 0, 0)
+	gl.Rectf(0,0,.3,.3)
+	gl.PopMatrix()*/
+}
+
