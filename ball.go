@@ -11,7 +11,7 @@ type Ball struct {
 	Pos mgl64.Vec3
 	Velocity mgl64.Vec3
 	Mass float64
-	Radius float32
+	Radius float64
 	sphere unsafe.Pointer
 }
 
@@ -26,7 +26,7 @@ func NewBall() *Ball {
 func (ball *Ball) Draw() {
 	gl.PushMatrix()
 	gl.Translated(ball.Pos.X(), ball.Pos.Y(), ball.Pos.Z())
-	glu.Sphere(ball.sphere, ball.Radius, 10, 10)
+	glu.Sphere(ball.sphere, float32(ball.Radius), 10, 10)
 	gl.PopMatrix()
 }
 

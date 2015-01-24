@@ -110,6 +110,7 @@ var ball *Ball
 
 func inits() {
 	ball = NewBall()
+	ball.Pos = mgl64.Vec3{1,3,1}
 	terrain = ReadTerrain(mgl64.Vec3{1,0.4,1})
 	//terrain.DrawAsSurface = false
 	
@@ -128,9 +129,9 @@ func inits() {
 	setLights()
 }
 
-var camYaw float64
+var camYaw float64 = 4.5
 var camPitch float64 = .5
-const gravity float64 = -0.0982
+const gravity float64 = -0.00982
 
 func handleInputs() {
 	if keys['A'] {camYaw += .01}
@@ -153,11 +154,11 @@ func physics(time Time) {
 	ball.Velocity[1] += gravity*time.Delta;
 	ball.Pos = ball.Pos.Add(ball.Velocity)
 	
-	/*
+	
 	tri := terrain.GetTriangleUnder(ball.Pos)
-	if ball.Pos.Distance(tri) < ball.Radius {
-		ball.Velocity = ball.Velocity.Sub(ball.Velocity.VectorProjection(tri.Normal()).Mul(2))
-	}*/
+	if tri[0].X() != math.NaN() && tri.Distance(ball.Pos) < ball.Radius {
+		ball.Velocity = ball.Velocity.Sub(VectorProjection(ball.Velocity, tri.Normal()).Mul(2))
+	}
 }
 
 func render() {

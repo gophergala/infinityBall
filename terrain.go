@@ -11,7 +11,8 @@ type Terrain struct {
 	Scale mgl64.Vec3
 	Pos mgl64.Vec3
 	Heights [][]float64
-	Normals [][]mgl64.Vec3
+	Verts [][][3]float64
+	Norms [][][3]float64
 	DrawAsSurface bool
 }
 
@@ -19,7 +20,8 @@ func newTerrain(scale mgl64.Vec3, heights [][]float64) *Terrain {
 	t := new(Terrain)
 	t.Scale = scale
 	t.Heights = heights
-	t.Normals = calculateNormals(scale, heights);
+	t.Verts = calculateVertices(scale, heights)
+	t.Norms = calculateNormals(scale, heights)
 	t.DrawAsSurface = true
 	return t
 }
@@ -41,15 +43,28 @@ func readHeightmap() [][]float64 {
 	return hm
 }
 
-func calculateNormals(scale mgl64.Vec3, heights [][]float64) [][]mgl64.Vec3 {
+func calculateVertices(scale mgl64.Vec3, heights [][]float64) [][][3]float64 {
+	h := len(heights)
+	w := len(heights[0])
+	verts := make([][][3]float64, h)
+	for y:=0; y<h-1; y++ {
+		verts[y] = make([][3]float64, w)
+		for x:=0; x<w-1; x++ {
+			verts[y][x] = [3]float64{float64(x), heights[y][x], float64(y)}
+		}
+	}
+	return verts
+}
+
+func calculateNormals(scale mgl64.Vec3, heights [][]float64) [][][3]float64 {
 	height := len(heights)
 	width := len(heights[0])
 
-	normals := make([][]mgl64.Vec3, height)
+	normals := make([][][3]float64, height)
 	for y:=0; y<height; y++ {
-		normals[y] = make([]mgl64.Vec3, width)
+		normals[y] = make([][3]float64, width)
 		for x:=0; x<width; x++ {
-			normals[y][x] = mgl64.Vec3{0.0, 1.0, 0.0}
+			normals[y][x] = [3]float64{0.0, 0.0, 1.0}
 		}
 	}
 	
@@ -74,7 +89,7 @@ func calculateNormals(scale mgl64.Vec3, heights [][]float64) [][]mgl64.Vec3 {
 			vny := (n1[1]+n2[1]+n3[1]+n4[1])/4	
 			vnz := (n1[2]+n2[2]+n3[2]+n4[2])/4
 		
-			normals[x][y] = mgl64.Vec3{vnx, vny, vnz}
+			normals[x][y] = [3]float64{vnx, vnz, vny}
 		}
 	}
 	return normals
@@ -93,9 +108,26 @@ func normal(v, t1, t2 mgl64.Vec3) mgl64.Vec3 {
 	return mgl64.Vec3{nx/l, ny/l, nz/l}
 }
 
-/*func (t *Terrain) GetTriangleUnder(pos mgl64.Vec3) Triangle {
+func (t *Terrain) GetTriangleUnder(pos mgl64.Vec3) Triangle {
+	h := len(t.Heights)
+	w := len(t.Heights[0])
+
+	v := pos.Sub(t.Pos)
+	xf,xr := math.Modf(v.X()/t.Scale.X())
+	yf,yr := math.Modf(v.Z()/t.Scale.Z())
+	x := int(xf)
+	y := int(yf)
 	
-}*/
+	if x<0 || y<0 || x>=w || y>=h {
+		return Triangle{mgl64.Vec3{math.NaN(),0,0},mgl64.Vec3{0,0,0},mgl64.Vec3{0,0,0}}
+	}
+	
+	if xr > yr {
+		return Triangle{t.Verts[x][y], t.Verts[x+1][y], t.Verts[x+1][y+1]}
+	} else {
+		return Triangle{t.Verts[x+1][y+1], t.Verts[x][y+1], t.Verts[x][y]}
+	}
+}
 
 func (t *Terrain) Draw() {
 	h := len(t.Heights)
@@ -103,47 +135,40 @@ func (t *Terrain) Draw() {
 	
 	gl.PushMatrix()
 
-	var n [3]float64	
-	
 	gl.Translated(t.Pos[0], t.Pos[1], t.Pos[2])
 	
 	if t.DrawAsSurface {
 		gl.Begin(gl.TRIANGLES)
-		for y:=0; y<h-1; y++ {
-			Y := float64(y)
-			for x:=0; x<w-1; x++ {
-				X := float64(x)
-				gl.Vertex3d(X+0, t.Heights[y+0][x+0], Y+0)
-				n = t.Normals[y+0][x+0]; gl.Normal3d(n[0], n[2], n[1])
-				gl.Vertex3d(X+1, t.Heights[y+0][x+1], Y+0)
-				n = t.Normals[y+0][x+1]; gl.Normal3d(n[0], n[2], n[1])
-				gl.Vertex3d(X+1, t.Heights[y+1][x+1], Y+1)
-				n = t.Normals[y+1][x+1]; gl.Normal3d(n[0], n[2], n[1])
-				
-				gl.Vertex3d(X+1, t.Heights[y+1][x+1], Y+1)
-				n = t.Normals[y+1][x+1]; gl.Normal3d(n[0], n[2], n[1])
-				gl.Vertex3d(X+0, t.Heights[y+1][x+0], Y+1)
-				n = t.Normals[y+1][x+0]; gl.Normal3d(n[0], n[2], n[1])
-				gl.Vertex3d(X+0, t.Heights[y+0][x+0], Y+0)
-				n = t.Normals[y+0][x+0]; gl.Normal3d(n[0], n[2], n[1])
+		for y:=0; y<h-2; y++ {
+			for x:=0; x<w-2; x++ {
+				gl.Vertex3dv(&t.Verts[y  ][x  ])
+				gl.Normal3dv(&t.Norms[y  ][x  ])
+				gl.Vertex3dv(&t.Verts[y  ][x+1])
+				gl.Normal3dv(&t.Norms[y  ][x+1])
+				gl.Vertex3dv(&t.Verts[y+1][x+1])
+				gl.Normal3dv(&t.Norms[y+1][x+1])
+				gl.Vertex3dv(&t.Verts[y+1][x+1])
+				gl.Normal3dv(&t.Norms[y+1][x+1])
+				gl.Vertex3dv(&t.Verts[y+1][x  ])
+				gl.Normal3dv(&t.Norms[y+1][x  ])
+				gl.Vertex3dv(&t.Verts[y  ][x  ])
+				gl.Normal3dv(&t.Norms[y  ][x  ])
 			}
 		}
 	} else {
 		gl.Begin(gl.LINES)
 		for y:=0; y<h-1; y++ {
-			Y := float64(y)
 			for x:=0; x<w-1; x++ {
-				X := float64(x)
-				gl.Vertex3d(X+0, t.Heights[y+0][x+0], Y+0)
-				gl.Vertex3d(X+1, t.Heights[y+0][x+1], Y+0)
-				gl.Vertex3d(X+1, t.Heights[y+0][x+1], Y+0)
-				gl.Vertex3d(X+1, t.Heights[y+1][x+1], Y+1)
-				gl.Vertex3d(X+1, t.Heights[y+1][x+1], Y+1)
-				gl.Vertex3d(X+0, t.Heights[y+0][x+0], Y+0)
-				gl.Vertex3d(X+1, t.Heights[y+1][x+1], Y+1)
-				gl.Vertex3d(X+0, t.Heights[y+1][x+0], Y+1)
-				gl.Vertex3d(X+0, t.Heights[y+1][x+0], Y+1)
-				gl.Vertex3d(X+0, t.Heights[y+0][x+0], Y+0)
+				gl.Vertex3dv(&t.Verts[y  ][x  ])
+				gl.Vertex3dv(&t.Verts[y  ][x+1])
+				gl.Vertex3dv(&t.Verts[y  ][x  ])
+				gl.Vertex3dv(&t.Verts[y+1][x  ])
+				gl.Vertex3dv(&t.Verts[y  ][x  ])
+				gl.Vertex3dv(&t.Verts[y+1][x+1])
+				gl.Vertex3dv(&t.Verts[y  ][x+1])
+				gl.Vertex3dv(&t.Verts[y+1][x+1])
+				gl.Vertex3dv(&t.Verts[y+1][x  ])
+				gl.Vertex3dv(&t.Verts[y+1][x+1])
 			}
 		}
 	}
