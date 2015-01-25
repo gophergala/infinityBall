@@ -33,3 +33,9 @@ go get github.com/go-gl/glfw
 go install infinityBall/;
 
 infinityBall
+
+# TODO
+
+We had a hard time using the exciting physics engines available for
+Golang. A migration to Unity would make it easier for rendering objects as
+well as adding physics.
