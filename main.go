@@ -107,18 +107,21 @@ var camera Camera
 var ball *Ball
 
 func inits() {
-	ball = NewBall(.1,.1,.8)
+	ball = NewBall(.1,.1,.7)
 	ball.Pos = mgl64.Vec3{1,2,1}
-	terrain = ReadTerrain(mgl64.Vec3{1,0.4,1})
+	terrain = CreateTerrain(mgl64.Vec3{.2,1,.2}, 65)
+	//terrain = ReadTerrain(mgl64.Vec3{1,-1,1})
 	
-	gl.ShadeModel (gl.SMOOTH)
-	gl.ClearColor (0.0, 0.0, 0.0, 0.0)
-	gl.ClearDepth(-1.0)
+	gl.ShadeModel(gl.SMOOTH)
+	gl.ClearColor(.52, .81, .98, 0)
+	gl.ClearDepth(-1)
 	gl.DepthMask(true)
 	gl.Enable(gl.DEPTH_TEST)
 	gl.DepthFunc(gl.LEQUAL)
 	//gl.DepthRangef(0,1)
 	gl.Disable(gl.BLEND)
+	//gl.Enable(gl.BLEND);
+	//gl.BlendFunc(gl.ONE, gl.ZERO);
 	gl.Hint(gl.PERSPECTIVE_CORRECTION_HINT, gl.NICEST)
 
 	gl.Enable(gl.LIGHTING)
@@ -131,28 +134,42 @@ var camPitch float64 = .5
 const gravity float64 = -0.00982
 
 func handleInputs() {
+	if keys['W'] {camPitch += .01}
 	if keys['A'] {camYaw += .01}
+	if keys['S'] {camPitch -= .01}
 	if keys['D'] {camYaw -= .01}
-	if keys['W'] {camPitch += .01}	
-	if keys['S'] {camPitch -= .01}	
+	
+	if keys['U'] {ball.Velocity[0] += .01}
+	if keys['H'] {ball.Velocity[2] -= .01}
+	if keys['J'] {ball.Velocity[0] -= .01}
+	if keys['K'] {ball.Velocity[2] += .01}
+	
+	if keys['R'] {ball.Pos = mgl64.Vec3{5,2,5}}
 	terrain.DrawAsSurface = !keys['L']
 
 	camera.Pos[1] = math.Sin(camPitch)*3
 	camera.Pos[0] = math.Cos(camPitch)*math.Cos(camYaw)*3
 	camera.Pos[2] = math.Cos(camPitch)*math.Sin(camYaw)*3
+
+	camera.Pos = camera.Pos.Add(ball.Pos)
 }
 
 func physics(time Time) {
 	ball.Velocity[1] += gravity*time.Delta;
 	ball.Pos = ball.Pos.Add(ball.Velocity)
 	
-	tri := terrain.GetTriangleUnder(ball.Pos)
-	if tri[0].X() != math.NaN() && tri.Distance(ball.Pos) < ball.Radius {
-		bounce := VectorProjection(ball.Velocity, tri.Normal())
-		ball.Velocity = ball.Velocity.Sub(bounce.Mul(1+ball.Bounciness))
-		posPassThrough := VectorProjection(ball.Pos.Sub(tri[0]), tri.Normal())
-		bottomPassThrough := posPassThrough.Sub(tri.Normal().Mul(ball.Radius))
-		ball.Pos = ball.Pos.Sub(bottomPassThrough.Mul(1+ball.Bounciness))
+	for y := -ball.Radius; y < ball.Radius; y += ball.Radius/5 {
+		for x := -ball.Radius; x < ball.Radius; x += ball.Radius/5 {
+			tri := terrain.GetTriangleUnder(ball.Pos.Add(mgl64.Vec3{x,0,y}))
+			if tri[0].X() != math.NaN() && tri.Distance(ball.Pos) < ball.Radius {
+				bounce := VectorProjection(ball.Velocity, tri.Normal())
+				ball.Velocity = ball.Velocity.Sub(bounce.Mul(1+ball.Bounciness))
+				posPassThrough := VectorProjection(ball.Pos.Sub(tri[0]), tri.Normal())
+				bottomPassThrough := posPassThrough.Sub(tri.Normal().Mul(ball.Radius))
+				ball.Pos = ball.Pos.Sub(bottomPassThrough.Mul(1+ball.Bounciness))
+				//return
+			}
+		}
 	}
 }
 

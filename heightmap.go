@@ -45,14 +45,14 @@ type Pair struct {
 	col int
 }
 
-func createHM(size int) *[][]float64 {
+func createHM(size int) [][]float64 {
 	//const s = size
 	rand.Seed( time.Now().UTC().UnixNano())
 	//var A [size][size] float64
 	A := hmHelper(size)
 
 	update(&A,Pair{(size-1)/2,(size-1)/2},(size-1)/2)
-	return &A
+	return A
 }
 
 func translateHM(hm *[][]float64, ox , oy int) *[][]float64 {

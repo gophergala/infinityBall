@@ -26,6 +26,10 @@ func newTerrain(scale mgl64.Vec3, heights [][]float64) *Terrain {
 	return t
 }
 
+func CreateTerrain(scale mgl64.Vec3, size int) *Terrain {
+	return newTerrain(scale, createHM(size))
+}
+
 func ReadTerrain(scale mgl64.Vec3) *Terrain {
 	return newTerrain(scale, readHeightmap())
 }
@@ -50,7 +54,7 @@ func calculateVertices(scale mgl64.Vec3, heights [][]float64) [][][3]float64 {
 	for y:=0; y<h; y++ {
 		verts[y] = make([][3]float64, w)
 		for x:=0; x<w; x++ {
-			verts[y][x] = [3]float64{float64(x), heights[y][x], float64(y)}
+			verts[y][x] = [3]float64{float64(x)*scale[0], heights[y][x]*scale[1], float64(y)*scale[2]}
 		}
 	}
 	return verts
@@ -68,8 +72,8 @@ func calculateNormals(verts [][][3]float64) [][][3]float64 {
 		}
 	}
 	
-	for y := 1; y < h-1; y++ {
-		for x := 1; x < w-1; x++ {
+	for y:=1; y<h-1; y++ {
+		for x:=1; x<w-1; x++ {
 			c := verts[y  ][x  ]
 			
 			l := verts[y  ][x-1]
@@ -102,10 +106,10 @@ func (t *Terrain) GetTriangleUnder(pos mgl64.Vec3) Triangle {
 		return Triangle{mgl64.Vec3{math.NaN(),0,0},mgl64.Vec3{0,0,0},mgl64.Vec3{0,0,0}}
 	}
 	
-	if xr > yr {
-		return Triangle{t.Verts[x][y], t.Verts[x+1][y], t.Verts[x+1][y+1]}
+	if xr < yr {
+		return Triangle{t.Verts[y][x], t.Verts[y+1][x], t.Verts[y+1][x+1]}
 	} else {
-		return Triangle{t.Verts[x+1][y+1], t.Verts[x][y+1], t.Verts[x][y]}
+		return Triangle{t.Verts[y+1][x+1], t.Verts[y][x+1], t.Verts[y][x]}
 	}
 }
 
