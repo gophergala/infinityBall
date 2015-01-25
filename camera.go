@@ -26,7 +26,7 @@ func (cam Camera) SetupCameraLook() {
 	
 	gl.MatrixMode(gl.MODELVIEW)
 	gl.LoadIdentity()
-	glu.LookAt(x,y,z, ball.Pos[0],ball.Pos[1],ball.Pos[2], 0,1,0)
+	glu.LookAt(x,y,z, 0,0,0, 0,1,0)
 	
 	//fov := math.Tan(cam.Fov/360*math.Pi)
 	//gl.Frustum(-fov,fov,-fov*aspect,fov*aspect, 1, 10)
