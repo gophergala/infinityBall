@@ -16,7 +16,8 @@ To use:
 
 Linux distribution using go1.4.1
 
-export GOBIN=$GOPATH/bin
+export GOBIN=$GOPATH/bin 
+
 export PATH=$GOPATH/bin:$PATH:/usr/local/go/bin
 
 comment can be added to /.bashrc
